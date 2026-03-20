@@ -9,6 +9,7 @@ from datetime import datetime, timezone, timedelta
 import json
 import csv
 import re
+import requests   # 追加: requests で非ASCII URLを扱う
 
 # --- 設定 ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -231,7 +232,7 @@ def get_realtime_data():
 
 
 def get_market_news():
-    """RSSフィードからニュース取得"""
+    """RSSフィードからニュース取得（requests使用）"""
     if not os.path.exists(RSS_LIST_FILE):
         print(f"[WARN] RSSファイルが見つかりません: {RSS_LIST_FILE}")
         return []
@@ -240,11 +241,12 @@ def get_market_news():
     all_entries = []
     for url in urls:
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=10) as res:
-                feed = feedparser.parse(res.read())
-                for e in feed.entries[:8]:
-                    all_entries.append(f"T: {e.title}\nS: {e.get('summary', '')}")
+            # requests で取得（非ASCII文字列でも自動処理）
+            response = requests.get(url, timeout=10, headers={'User-Agent': 'Mozilla/5.0'})
+            response.raise_for_status()
+            feed = feedparser.parse(response.content)
+            for e in feed.entries[:8]:
+                all_entries.append(f"T: {e.title}\nS: {e.get('summary', '')}")
         except Exception as e:
             print(f"[WARN] RSS取得失敗: {url} ({e})")
     print(f"[INFO] RSS取得件数: {len(all_entries)} 件")
@@ -315,7 +317,7 @@ NYSE騰落比率が指数と逆行していればヒンデンブルグ・オー�
 """
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-1.5-flash',  # 確実に利用可能なモデル
             contents=prompt
         )
         return response.text
