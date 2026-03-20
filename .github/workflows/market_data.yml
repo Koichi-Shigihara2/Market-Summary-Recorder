@@ -22,11 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yfinance feedparser google-genai requests
+          pip install yfinance feedparser requests
 
       - name: Run data collection and email
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
         run: python scr/collect_and_send.py
