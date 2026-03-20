@@ -2,14 +2,14 @@ name: Market Data Collection
 
 on:
   schedule:
-    - cron: '30 10 * * *'   # 毎日19:30 JST (UTC+9)
-  workflow_dispatch:        # 手動実行も可能
+    - cron: '30 10 * * *'
+  workflow_dispatch:
 
 jobs:
   collect-and-send:
     runs-on: ubuntu-latest
     permissions:
-      contents: write       # JSON/CSV のコミット・プッシュに必要
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yfinance feedparser google-generativeai
+          pip install yfinance feedparser google-genai
 
       - name: Run data collection and email
         env:
