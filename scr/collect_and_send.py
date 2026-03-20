@@ -24,7 +24,7 @@ RSS_LIST_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "02_mar
 JST = timezone(timedelta(hours=9))
 
 # データ保存先（GitHubリポジトリ内のパス）
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 JSON_PATH = os.path.join(DATA_DIR, "market_data.json")
 CSV_PATH = os.path.join(DATA_DIR, "market_data.csv")
 
