@@ -619,7 +619,7 @@ let activeMetrics = new Set(["VIX指数", "S&P500"]);
 let chartInst    = null;
 
 // ── ユーティリティ ─────────────────────────────────────────────────────────────
-const phaseClass = j => j==="晴れ"?"sunny": j==="嵐"?"storm":"cloudy";
+const phaseClass = j => j==="晴れ"?"sunny": (j==="嵐")?"storm":"cloudy";
 const fmtDate    = iso => { const d=new Date(iso); return `${d.getMonth()+1}/${d.getDate()}`; };
 const fmtDateFull= iso => { const d=new Date(iso); return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; };
 const fmtChg     = v => {
@@ -867,9 +867,26 @@ async function init() {
   try {
     const resp = await fetch("data/market_data.json");
     const json = await resp.json();
-    if (Array.isArray(json) && json.length > 0)
-      allData = json.sort((a,b)=>new Date(a.date)-new Date(b.date));
-    else allData = makeSample();
+    if (Array.isArray(json) && json.length > 0) {
+      allData = json
+        .map(d => {
+          // judgment の表記ゆれを正規化（「曇」→「曇り」「晴」→「晴れ」）
+          const j = d.judgment || "不明";
+          d.judgment = j === "曇" ? "曇り" : j === "晴" ? "晴れ" : j;
+          // credit が無い場合は summary から簡易推定
+          if (!d.credit) {
+            const s = d.summary || "";
+            const st = s.includes("株（S&P500の方向）は下落") ? "リスクオフ" : "リスクオン";
+            const bo = s.includes("債券（米10年債利回りの方向）は上昇") ? "リスクオフ" : "リスクオン";
+            const cr = s.includes("クレジット（HYG対LQD比の方向）は上昇") ? "リスクオン" : "リスクオフ";
+            d.credit = { stock: st, bond: bo, credit: cr };
+          }
+          return d;
+        })
+        .sort((a,b) => new Date(a.date) - new Date(b.date));
+    } else {
+      allData = makeSample();
+    }
   } catch { allData = makeSample(); }
   applyPeriod();
   renderAll();
