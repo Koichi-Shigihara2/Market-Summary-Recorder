@@ -2,7 +2,7 @@ name: Market Data Collection
 
 on:
   schedule:
-    - cron: '30 10 * * *'
+    - cron: '30 10 * * *'   # 毎日19:30 JST
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yfinance feedparser google-genai
+          pip install yfinance feedparser google-genai requests
 
       - name: Run data collection and email
         env:
