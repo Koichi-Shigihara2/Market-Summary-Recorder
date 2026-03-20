@@ -2,7 +2,7 @@ import os
 import urllib.request
 import feedparser
 import yfinance as yf
-from google import genai
+import google.generativeai as genai
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timezone, timedelta
