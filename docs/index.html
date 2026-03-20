@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>市場データ時系列ダッシュボード</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: auto; }
+        .header { background: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .controls { margin-bottom: 20px; }
+        select, input { padding: 8px; margin-right: 10px; }
+        .chart-container { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .data-table { background: white; border-radius: 8px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+        .judgment-sunny { color: #f39c12; font-weight: bold; }
+        .judgment-cloudy { color: #7f8c8d; font-weight: bold; }
+        .judgment-storm { color: #e74c3c; font-weight: bold; }
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📊 市場データ時系列ダッシュボード</h1>
+        <p>VIX / 日経平均 / ドル円 / 米10年債 などの推移</p>
+    </div>
+
+    <div class="controls">
+        <label>指標: </label>
+        <select id="indicator">
+            <option value="VIX指数">VIX指数</option>
+            <option value="日経平均">日経平均</option>
+            <option value="ドル円">ドル円</option>
+            <option value="米10年債">米10年債</option>
+        </select>
+        <button onclick="updateChart()">更新</button>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="indicatorChart" width="800" height="400"></canvas>
+    </div>
+
+    <div class="data-table">
+        <table id="dataTable">
+            <thead>
+                <tr><th>日付</th><th>判定</th><th>VIX</th><th>日経平均</th><th>ドル円</th><th>詳細</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+let marketData = [];
+let chart = null;
+
+async function loadData() {
+    try {
+        const response = await fetch('data/market_data.json');
+        marketData = await response.json();
+        // 日付降順（最新が上）
+        marketData.sort((a,b) => new Date(b.date) - new Date(a.date));
+        renderTable();
+        updateChart();
+    } catch(e) {
+        console.error('データ読み込みエラー', e);
+    }
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    for (let d of marketData) {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = new Date(d.date).toLocaleString('ja-JP');
+        const judgment = d.judgment || '不明';
+        const cellJudgment = row.insertCell(1);
+        cellJudgment.textContent = judgment;
+        cellJudgment.className = `judgment-${judgment === '晴れ' ? 'sunny' : judgment === '曇り' ? 'cloudy' : 'storm'}`;
+        row.insertCell(2).textContent = d.indicators?.['VIX指数']?.value ?? '-';
+        row.insertCell(3).textContent = d.indicators?.['日経平均']?.value?.toLocaleString() ?? '-';
+        row.insertCell(4).textContent = d.indicators?.['ドル円']?.value ?? '-';
+        const detailBtn = document.createElement('button');
+        detailBtn.textContent = '詳細';
+        detailBtn.onclick = () => alert(d.summary || '詳細なし');
+        row.insertCell(5).appendChild(detailBtn);
+    }
+}
+
+function updateChart() {
+    const indicator = document.getElementById('indicator').value;
+    // 時系列昇順（古い順）に並べ替え
+    const sorted = [...marketData].reverse();
+    const labels = sorted.map(d => new Date(d.date).toLocaleDateString('ja-JP'));
+    const values = sorted.map(d => d.indicators?.[indicator]?.value ?? null);
+
+    const ctx = document.getElementById('indicatorChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: indicator, data: values, borderColor: 'rgb(75, 192, 192)' }] },
+        options: { responsive: true }
+    });
+}
+
+loadData();
+</script>
+</body>
+</html>
