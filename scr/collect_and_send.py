@@ -2,13 +2,18 @@ import os
 import urllib.request
 import feedparser
 import yfinance as yf
-import google.generativeai as genai
+from google import genai   # ← ここを修正
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timezone, timedelta
 import json
 import csv
 import re
+
+# ... 中略 ...
+
+# RSSファイルのパスを正しく指定（リポジトリルートにある想定）
+RSS_LIST_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "02_market_rss.txt")
 
 # --- 設定 ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
